@@ -1,0 +1,430 @@
+---
+name: playable-banner
+description: Create Google Ads playable HTML5 banners for App campaigns. Transforms app screenshots into validated, interactive ad experiences with preview page and downloadable ZIP.
+---
+
+# Google Ads Playable Banner Creator
+
+Create playable HTML5 banners for **Google Ads App campaigns** that let users preview and interact with non-gaming apps before installing.
+
+## Workflow
+
+1. **Input** - Receive app screenshots, Figma HTML, brand assets, fonts, and interaction instructions
+2. **Analysis** - Understand what part of UI to simulate and how
+3. **Development** - Build HTML5 playable using GSAP for smooth animations
+4. **Preview** - Deliver preview page with generic phone mockup
+5. **Output** - Provide downloadable ZIP ready for Google Ads
+
+---
+
+## Input Expectations
+
+| Asset | Description |
+|-------|-------------|
+| **Screenshots** | Actual app UI screens |
+| **Figma HTML** | Exported HTML from Figma designs |
+| **Instructions** | WHAT to simulate and HOW |
+| **Brand Assets** | App icon, logo, graphics |
+| **Fonts** | Google Fonts specifications |
+
+**Creative Direction:** Follow explicit instructions. Propose ideas only when asked.
+
+### Client Asset Request Template
+
+When starting a new playable project, request the following upfront:
+
+| Asset | Purpose |
+|-------|---------|
+| **App store listing URL** | Reference for app functionality and existing creative |
+| **3-5 high-res screenshots** | Specific screens to recreate (specify which screens needed) |
+| **Brand guidelines PDF** | Colors, typography rules, logo usage |
+| **Font files or Google Fonts names** | Exact fonts with weights needed |
+| **Desired interaction flow description** | What users should do step-by-step |
+| **CTA copy preferences** | Preferred button text and headlines |
+
+---
+
+## Output Deliverables
+
+### Preview Page
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│      ┌───────────────────┐   Screens    │
+│      │                   │   ┌────────┐ │
+│      │     PLAYABLE      │   │1. Hook │ │ ← Clickable
+│      │      PREVIEW      │   │2. Demo │ │   navigation
+│      │                   │   │3. CTA  │ │
+│      └───────────────────┘   └────────┘ │
+│                                         │
+│         [ Download ZIP ]                │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+#### Preview Page Requirements
+- **No phone notch overlay** - obscures content during review
+- **Clickable screen list** - each screen item navigates directly to that screen
+- **PostMessage communication** between preview and iframe:
+
+### ZIP Contents
+```
+playable-ad.zip
+├── index.html    # Main playable with required meta tags
+├── styles.css    # Optional (can be inline)
+├── script.js     # Optional (can be inline)
+└── assets/       # Images, embedded fonts
+```
+
+---
+
+## Google Ads Requirements
+
+### File Limits
+
+| Requirement | Specification |
+|-------------|---------------|
+| Format | `.zip` file |
+| Max Size | 5 MB (5.2 MB interstitial) |
+| Max Files | 512 files |
+| Allowed Types | `.html`, `.css`, `.js`, `.jpg`, `.jpeg`, `.png`, `.gif`, `.svg` |
+| File Naming | Letters, numbers, `.`, `-`, `_` only. **NO SPACES** |
+| Encoding | UTF-8 |
+
+### Required HTML Structure
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="ad.orientation" content="portrait">
+    <meta name="ad.size" content="320x480">
+    <script src="https://tpc.googlesyndication.com/pagead/gadgets/html5/api/exitapi.js"></script>
+</head>
+<body>
+    <!-- Content -->
+    <button onclick="ExitApi.exit()">Install Now</button>
+</body>
+</html>
+```
+
+### Meta Tags Reference
+
+| Meta Tag | Required | Description |
+|----------|----------|-------------|
+| `ad.orientation` | **Yes** | Controls display orientation |
+| `ad.size` | Optional | Defines base dimensions (e.g., `320x480`). Sometimes needed for proper scaling. |
+
+### Orientation Meta Tags
+
+| Orientation | Meta Tag |
+|-------------|----------|
+| Portrait (priority) | `<meta name="ad.orientation" content="portrait">` |
+| Landscape | `<meta name="ad.orientation" content="landscape">` |
+| Both | `<meta name="ad.orientation" content="portrait,landscape">` |
+
+**Always design portrait-first.**
+
+### Allowed External Resources
+
+```html
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=FontName" rel="stylesheet">
+
+<!-- GSAP (preferred for animations) -->
+<script src="https://s0.2mdn.net/ads/studio/cached_libs/tweenmax_1.18.0_499ba64a23378545748ff12d372e59e9_min.js"></script>
+
+<!-- CreateJS -->
+<script src="https://s0.2mdn.net/ads/studio/cached_libs/createjs_2015.11.26_54e1c3722102182bb133912ad4442e19_min.js"></script>
+```
+
+**All other external URLs are FORBIDDEN.**
+
+### ExitAPI (Critical)
+
+Must be a **literal `<script>` tag in `<head>`** - not loaded dynamically.
+
+```html
+<head>
+    <script src="https://tpc.googlesyndication.com/pagead/gadgets/html5/api/exitapi.js"></script>
+</head>
+<body>
+    <button onclick="ExitApi.exit()">Install Now</button>
+</body>
+```
+
+Without proper ExitAPI, the entire ad becomes clickable (bad UX, accidental clicks).
+
+---
+
+## Asset Optimization
+
+Staying under the 5MB limit requires careful asset management:
+
+| Asset Type | Recommendation |
+|------------|----------------|
+| **Images** | Use TinyPNG/Squoosh, prefer JPG for photos (80% quality), PNG for UI with transparency |
+| **SVGs** | Run through SVGO, remove metadata, editor cruft, and unnecessary attributes |
+| **Fonts** | Subset to used characters only (`pyftsubset` or Google Fonts `&text=` parameter) |
+| **Code** | Minify JS/CSS before zipping (Terser, cssnano) |
+
+### Image Guidelines
+
+| Format | Use For | Target Size |
+|--------|---------|-------------|
+| JPG | Photos, gradients, complex imagery | < 100KB each |
+| PNG | UI elements, icons with transparency | < 50KB each |
+| SVG | Simple icons, logos, shapes | < 5KB each |
+
+### Size Budget Example (5MB total)
+
+```
+Images:     ~3.5 MB (70%)
+Fonts:      ~500 KB (10%)
+HTML/CSS/JS: ~200 KB (4%)
+Buffer:     ~800 KB (16%)
+```
+
+**Tip:** Limit to 8-10 images maximum. Combine sprites where possible.
+
+---
+
+## Responsive Handling
+
+### Safe Area Strategy
+
+Avoid hardcoded pixel values where possible. Use relative units for scalability:
+
+```css
+/* Preferred approach */
+.container {
+    width: 100vw;
+    height: 100vh;
+    padding: calc(48px + env(safe-area-inset-top)) 16px 16px;
+}
+
+.element {
+    width: 80%;
+    max-width: 320px;
+}
+
+/* Font scaling */
+.headline {
+    font-size: clamp(18px, 5vw, 24px);
+}
+```
+
+### Sizing Strategy
+
+| Element Type | Recommended Approach |
+|--------------|---------------------|
+| **Container** | `100vw` × `100vh` |
+| **Top padding** | `48px` minimum (clears notches/status bars) |
+| **Buttons** | `width: 80%` or `max-width` with percentage |
+| **Text** | `clamp()` for responsive sizing |
+| **Images** | `object-fit: cover` with percentage-based containers |
+| **Touch targets** | Minimum `44px × 44px` |
+
+### Common Viewport Sizes (Portrait)
+
+| Device Class | Width | Test Priority |
+|--------------|-------|---------------|
+| Small Android | 360px | High |
+| iPhone | 390px | High |
+| Large phones | 414px | Medium |
+
+### Fixed vs Fluid
+
+```css
+/* ❌ Avoid */
+.card { width: 300px; left: 30px; }
+
+/* ✅ Prefer */
+.card { width: 85%; max-width: 300px; margin: 0 auto; }
+```
+
+---
+
+## The 3-Step Engagement Model
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  INTRO/TUTORIAL │ →  │  INTERACTIVE    │ →  │  END CARD/CTA   │
+│   (2-3 sec)     │    │  DEMO (10-20s)  │    │   (persistent)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Step 1: Intro/Tutorial (2-3 seconds)
+
+- **Tutorial hand** showing where to tap/interact
+- **Mini-goal**: "Tap to explore", "Swipe to discover"
+- **Minimal branding** - save prominent logo for CTA screen
+- **No logo clutter** - focus on the hook headline and visual
+
+### Step 2: Interactive Demo (10-20 seconds)
+
+Let users experience the core app feature:
+
+| App Type | Demo Idea |
+|----------|-----------|
+| E-commerce | Swipe products, add to cart |
+| Fitness | Select exercises, see preview |
+| Finance | Drag expenses, see savings grow |
+| Productivity | Create task, check it off |
+| Food Delivery | Browse menu, customize order |
+| Travel | Explore destinations, swipe photos |
+
+**Interaction patterns:** Tap, Swipe, Drag & Drop, Hold, Scroll
+
+### Step 3: End Card/CTA (Persistent)
+
+- **Prominent branding**: Large centered logo (bigger than other screens)
+- **Headline**: Centered, reinforcing value proposition
+- **Visual content**: Product grid, feature showcase, or celebration
+- **Primary CTA button**: "Install Free", "Get the App", "Continue in App"
+- **Store badge**: Google Play / App Store logo at bottom
+- Optional replay button
+
+#### CTA Screen Layout Structure
+```
+┌─────────────────────────┐
+│                         │
+│      [ BIG LOGO ]       │  ← Centered, prominent
+│                         │
+│    Compelling Headline  │  ← Centered
+│                         │
+│   ┌─────┬─────┬─────┐   │
+│   │     │     │     │   │  ← Visual content
+│   │     │     │     │   │    (sized appropriately,
+│   │     │     │     │   │     not too large)
+│   └─────┴─────┴─────┘   │
+│                         │
+│  [ Continue in App ]    │  ← Primary CTA
+│                         │
+│     ▶ Google Play       │  ← Store badge at bottom
+│                         │
+└─────────────────────────┘
+```
+
+### CTA Placement
+
+**Portrait:** Bottom 15-20% of screen
+**Landscape:** Right 20-25% of screen
+
+CTA should be **always visible** with progressive prominence (subtle → prominent).
+
+### Layout Considerations for Phone Displays
+
+| Element | Guideline |
+|---------|-----------|
+| **Top padding** | Use 48px+ to clear phone notches and status bars |
+| **Logo on intermediate screens** | Remove or minimize - save prominence for CTA |
+| **Logo on CTA screen** | Centered, larger than anywhere else |
+| **Visual content (grids, images)** | Size conservatively - leave breathing room |
+| **Clickable areas** | Ensure any click on demo screens progresses the flow |
+
+---
+
+## Technical Constraints
+
+- Must work in sandboxed iframe (`allow-scripts` only)
+- No `localStorage` or `sessionStorage`
+- No `<iframe>`, `<frame>`, or `<frameset>` tags
+- Explicit end tags required: `<path></path>` not `<path />`
+- Images for canvas: use `crossorigin="anonymous"`
+- Sound: **never auto-play** - only after user interaction
+
+---
+
+## Pre-Flight Checklist
+
+Run through this checklist before every submission:
+
+### File Structure
+- [ ] ZIP file under 5MB (5.2MB for interstitial)
+- [ ] No spaces in any filenames
+- [ ] Only allowed file types (`.html`, `.css`, `.js`, `.jpg`, `.jpeg`, `.png`, `.gif`, `.svg`)
+- [ ] All filenames use only `a-z`, `0-9`, `.`, `-`, `_`
+- [ ] UTF-8 encoding on all files
+
+### Required Code
+- [ ] `<!DOCTYPE html>` declaration present
+- [ ] `<meta name="ad.orientation" content="portrait">` in `<head>`
+- [ ] ExitAPI script as **literal `<script>` tag in `<head>`** (not dynamically loaded)
+- [ ] CTA button calls `ExitApi.exit()`
+
+### External Resources
+- [ ] All external URLs are Google-approved (fonts.googleapis.com, s0.2mdn.net)
+- [ ] No unauthorized third-party scripts or resources
+- [ ] No `<iframe>`, `<frame>`, or `<frameset>` tags
+
+### UX & Accessibility
+- [ ] Touch targets are ≥ 44px × 44px
+- [ ] Top padding ≥ 48px (clears notches/status bars)
+- [ ] Tutorial hand/guidance on first interaction
+- [ ] CTA always visible and functional
+
+### Testing
+- [ ] Validated at **https://h5validator.appspot.com/adwords/asset** (select "App Campaigns")
+- [ ] Validator confirms ExitAPI is detected
+- [ ] Tested on multiple viewport sizes (360px, 390px, 414px width)
+- [ ] All interactions work on touch devices
+
+---
+
+## Common Rejection Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| Invalid fourth party call | External URL | Remove non-Google URLs |
+| Unacceptable HTML5 ad | Missing tags | Add DOCTYPE, orientation meta |
+| File size too large | ZIP > 5MB | Compress images, minify code |
+| Dimensions not allowed | Wrong meta | Use `ad.orientation` instead |
+| Unsupported file type | Bad file in ZIP | Remove `.mp4`, `.mp3`, etc. |
+| High CTR low CVR | ExitAPI wrong | Move to literal `<script>` in `<head>` |
+| Characters not supported | Spaces in names | Use only `a-z`, `0-9`, `.`, `-`, `_` |
+
+---
+
+## Validation
+
+Test at: **https://h5validator.appspot.com/adwords/asset**
+
+- Select "App Campaigns" checkbox
+- Upload the ZIP file
+- Verify CTA shows ExitAPI confirmation
+
+---
+
+## Best Practices
+
+### Do
+
+- Prioritize portrait, then landscape
+- Show tutorial hand on first interaction
+- One core feature demo only
+- Immediate feedback for every interaction
+- CTA always visible, increasing prominence
+- Use GSAP for smooth animations
+- Save prominent branding for CTA screen
+- Add sufficient top padding (48px+) to clear phone UI
+- Make clickable screen navigation in preview page
+- Use relative units (`%`, `vw`, `vh`, `clamp()`) for scalability
+- Compress all images before adding to ZIP
+- Test at h5validator before delivery
+
+### Don't
+
+- Auto-play sound
+- Overwhelm with features
+- Hide CTA completely
+- Use non-Google external resources
+- Use localStorage/sessionStorage
+- Use iframes
+- Forget tutorial guidance
+- Clutter intermediate screens with logos
+- Cut off images with improper aspect ratios (use `object-fit: cover`)
+- Make visual grids too large - leave breathing room
+- Use hardcoded pixel values for layout
+- Skip validation testing
